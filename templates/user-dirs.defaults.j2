@@ -1,0 +1,15 @@
+{{ ansible_managed | comment }}
+# Default settings for user directories
+#
+# The values are relative pathnames from the home directory and
+# will be translated on a per-path-element basis into the users locale
+{% if host.xdg_user_dirs is defined %}
+DESKTOP={{ host.xdg_user_dirs['DESKTOP'] }}
+DOWNLOAD={{ host.xdg_user_dirs['DOWNLOAD'] }}
+TEMPLATES={{ host.xdg_user_dirs['TEMPLATES'] }}
+PUBLICSHARE={{ host.xdg_user_dirs['PUBLICSHARE'] }}
+DOCUMENTS={{ host.xdg_user_dirs['DOCUMENTS'] }}
+MUSIC={{ host.xdg_user_dirs['MUSIC'] }}
+PICTURES={{ host.xdg_user_dirs['PICTURES'] }}
+VIDEOS={{ host.xdg_user_dirs['VIDEOS'] }}
+{% endif %}

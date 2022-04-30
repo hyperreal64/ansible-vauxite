@@ -1,0 +1,43 @@
+{{ ansible_managed | comment }}
+location:
+  source_directories:
+    - /etc
+    - /var/home
+    - /var/log
+
+  repositories:
+    {% if host.borgmatic_repo is defined %}
+    - {{ host.borgmatic_repo }}
+    {% endif %}
+
+  exclude_patterns:
+    - '*.pyc'
+    - /etc/.snapshots
+    - /var/home/*/.cache
+    - /var/home/.snapshots
+
+  exclude_caches: true
+
+  exclude_if_present:
+    - .nobackup
+
+storage:
+  compression: zstd
+  ssh_command: ssh -i /var/home/jas/.ssh/id_ed25519
+  relocated_repo_access_is_ok: true
+
+retention:
+  keep_hourly: 24
+  keep_daily: 7
+  keep_weekly: 4
+  keep_monthly: 6
+
+consistency:
+  checks:
+    - repository
+    - archives
+
+hooks:
+  {% if borgmatic_hc_uuid is defined %}
+  healthchecks: https://hc-ping.com/{{ host.borgmatic_hc_uuid }}
+  {% endif %}

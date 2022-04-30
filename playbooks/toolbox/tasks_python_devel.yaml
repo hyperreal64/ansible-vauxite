@@ -1,0 +1,17 @@
+- name: Include the variables
+  ansible.builtin.include_vars: configs/toolbox_vars.yaml
+
+- name: Install packages for Python development {{ task_identifier }}
+  ansible.builtin.dnf:
+    name: "{{ devel_python_packages }}"
+    state: present
+  
+- name: Install pipx packages {{ task_identifier }}
+  community.general.pipx:
+    name: "{{ item }}"
+    state: install
+    install_deps: true
+  with_items: "{{ pipx_packages }}"
+  environment:
+    PIPX_BIN_DIR: "{{ pipx_bin_dir }}"
+    PIPX_HOME: "{{ pipx_home }}"
