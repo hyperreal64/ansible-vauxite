@@ -2,7 +2,6 @@
 - name: Setup flatpaks
   hosts: localhost
   vars:
-    task_identifier: "(Flatpak: {{ ansible_hostname }})"
     remotes:
       - name: fedora
         state: present
@@ -171,7 +170,7 @@
         remote: flathub
 
   tasks:
-    - name: Add flatpak remotes {{ task_identifier }}
+    - name: Add flatpak remotes 
       tags: [remotes]
       community.general.flatpak_remote:
         name: "{{ item.name }}"
@@ -180,10 +179,11 @@
         flatpakrepo_url: "{{ item.flatpakrepo_url }}"
       with_items: "{{ remotes }}"
 
-    - name: Manage flatpaks {{ task_identifier }}
+    - name: Manage flatpaks 
       tags: [flatpaks]
       community.general.flatpak:
         name: "{{ item.name }}"
         state: "{{ item.state }}"
         method: "{{ item.method }}"
         remote: "{{ item.remote }}"
+      with_items: "{{ flatpaks }}"

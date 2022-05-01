@@ -10,12 +10,11 @@ python3 -m pip install ansible
 ansible --version
 ```
 
-- Edit `configs/flatpak.yaml`, `configs/toolbox.yaml`, `configs/toolbox_vars.yaml` and `config/host.yaml`
-- Run with `ansible-playbook setup.yaml -K`
+Playbook runs:
 
-- Flatpak names are case sensitive. While flatpak is ok with it, creation of symlinks will fail.
-
-- `ansible-playbook setup.yaml --tags flatpak` <- Run only flatpak tasks
-- `ansible-playbook setup.yaml --tags toolbox` <- Run only toolbox tasks ( for all toolboxes )
-- `ansible-playbook setup.yaml --tags fedora-toolbox-35` <- Run only specific toolbox tasks
-- `ansible-playbook setup.yaml --tags host -K` <- Run only host tasks
+```bash
+cd playbooks/
+ansible-playbook host.yaml -K
+ansible-playbook toolbox.yaml -K
+ansible-playbook flatpaks.yaml
+```

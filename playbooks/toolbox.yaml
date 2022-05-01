@@ -2,9 +2,6 @@
 - name: Setup default toolbox
   hosts: localhost
   vars:
-    name: fedora-toolbox-35
-    task_identifier: "(Toolbox: {{ name }})"
-    image: registry.fedoraproject.org/fedora-toolbox:35
     shims:
       - flatpak
       - systemctl
@@ -60,39 +57,40 @@
       - w3m
       - wget
       - xclip
-      - yarn
       - zip
 
   tasks:
-    - name: Configure DNF plugins {{ task_identifier }}
+    - name: Configure DNF plugins 
       ansible.builtin.blockinfile:
         path: /etc/dnf/dnf.conf
         block: |
           fastestmirror=True
           deltarpm=True
           max_parallel_downloads=10
-      become: True
+      become: true
 
-    - name: Update all packages {{ task_identifier }}
+    - name: Update all packages 
       ansible.builtin.dnf:
         name: "*"
         state: latest
-      become: True
+        update_cache: true
+        update_only: true
+      become: true
 
-    - name: Install common packages {{ task_identifier }}
+    - name: Install common packages 
       ansible.builtin.dnf:
         name: "{{ dnf_packages }}"
         state: present
       become: true
 
-    - name: Copy host-runner to container {{ task_identifier }}
+    - name: Copy host-runner to container 
       ansible.builtin.copy:
-        src: host-runner.sh.j2
+        src: host-runner.sh
         dest: /usr/local/bin/host-runner
         mode: a+x
       become: true
 
-    - name: Create host-runner symbolic links {{ task_identifier }}
+    - name: Create host-runner symbolic links 
       ansible.builtin.file:
         src: /usr/local/bin/host-runner
         dest: "/usr/local/bin/{{ executable }}"
@@ -100,18 +98,19 @@
       loop: "{{ shims | default([]) }}"
       loop_control:
         loop_var: executable
+      become: true
 
-    - name: Install LSP packages globally {{ task_identifier }}
+    - name: Install LSP packages globally 
       community.general.npm:
-        name:  "{{ item }}"
+        name: "{{ item }}"
         state: present
         global: true
       with_items: "{{ npm_lsp_packages }}"
       become: true
 
-    - name: Install Python packages with pipx {{ task_identifier }}
+    - name: Install Python packages with pipx 
       community.general.pipx:
         name: "{{ item }}"
-        state: Install
+        state: install
         install_deps: true
       with_items: "{{ pipx_packages }}"

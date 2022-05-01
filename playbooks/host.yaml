@@ -3,7 +3,6 @@
   hosts: localhost
   vars:
     hostname: nocturnal.local
-    task_identifier: "(Host: {{ hostname }})"
     layered_packages:
       - borgbackup
       - borgmatic
@@ -73,7 +72,7 @@
         enabled: true
 
   tasks:
-    - name: Set hostname {{ task_identifier }}
+    - name: Set hostname 
       ansible.builtin.hostname:
         name: "{{ hostname }}"
         use: systemd
@@ -88,15 +87,18 @@
         group: root
         mode: "0644"
       become: true
-        
-    - name: Create user directories in $HOME {{ task_identifier }}
+
+    - name: Create user directories in $HOME 
       tags: [xdg]
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/{{ item }}"
         state: directory
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_id }}"
+        mode: "0644"
       with_items: "{{ user_dirs }}"
 
-    - name: Template out user-dirs.defaults {{ task_identifier }}
+    - name: Template out user-dirs.defaults 
       tags: [xdg]
       ansible.builtin.template:
         src: user-dirs.defaults.j2
@@ -106,35 +108,32 @@
         mode: "0644"
       become: true
 
-    - name: Delete unused directories in $HOME {{ task_identifier }}
+    - name: Delete unused directories in $HOME 
       tags: [xdg]
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/{{ item }}"
         state: absent
       with_items: "{{ delete_dirs }}"
 
-    - name: Remove user-dirs.dirs from ~/.config {{ task_identifier }}
+    - name: Remove user-dirs.dirs from ~/.config 
       tags: [xdg]
       ansible.builtin.file:
         path: "{{ ansible_user_dir }}/.config/user-dirs.dirs"
         state: absent
 
-    - name: Test if xdg-user-dirs-update command is available {{ task_identifier }}
+    - name: Test if xdg-user-dirs-update command is available 
       tags: [xdg]
-      ansible.builtin.shell:
-        cmd: command -v xdg-user-dirs-update
-        executable: /bin/bash
+      ansible.builtin.command: command -v xdg-user-dirs-update
       register: xdg_user_dirs_update
+      changed_when: false
 
-    - name: Run xdg-user-dirs-update {{ task_identifier }}
+    - name: Run xdg-user-dirs-update 
       tags: [xdg]
-      ansible.builtin.shell:
-        cmd: "{{ xdg_user_dirs_update.stdout }}"
-        executable: /bin/bash
+      ansible.builtin.command: "{{ xdg_user_dirs_update.stdout }}"
       when:
         - xdg_user_dirs_update.rc == 0
 
-    - name: Ensure /etc/borgmatic directory exists {{ task_identifier }}
+    - name: Ensure /etc/borgmatic directory exists 
       tags: [borg]
       ansible.builtin.file:
         path: /etc/borgmatic
@@ -144,7 +143,7 @@
         mode: "0644"
       become: true
 
-    - name: Template out borgmatic config {{ task_identifier }}
+    - name: Template out borgmatic config 
       tags: [borg]
       ansible.builtin.template:
         src: borgmatic_config.yaml.j2
@@ -154,7 +153,7 @@
         mode: "0644"
       become: true
 
-    - name: Copy borgmatic systemd services {{ task_identifier }}
+    - name: Copy borgmatic systemd services 
       tags: [borg]
       ansible.builtin.copy:
         src: "{{ item }}"
@@ -167,7 +166,7 @@
         - autoborg.timer
       become: true
 
-    - name: Install rpm-gpg files to /etc/pki/rpm-gpg {{ task_identifier }}
+    - name: Install rpm-gpg files to /etc/pki/rpm-gpg 
       ansible.builtin.copy:
         src: pki/
         dest: /etc/pki/
@@ -176,7 +175,7 @@
         mode: "0644"
       become: true
 
-    - name: Copy RPMFusion repository to /etc/yum.repos.d {{ task_identifier }}
+    - name: Copy RPMFusion repository to /etc/yum.repos.d 
       ansible.builtin.copy:
         src: rpmfusion.repo
         dest: /etc/yum.repos.d/rpmfusion.repo
@@ -185,44 +184,44 @@
         mode: "0644"
       become: true
 
-    - name: Add dawid/better_fonts repository {{ task_identifier }}
+    - name: Add dawid/better_fonts repository 
       ansible.builtin.get_url:
         url: "https://copr.fedorainfracloud.org/coprs/dawid/better_fonts/repo/fedora-{{ relver }}/dawid-better_fonts-fedora-{{ relver }}.repo"
         dest: "/etc/yum.repos.d/dawid-better_fonts-fedora-{{ relver }}.repo"
         mode: "0644"
       become: true
 
-    - name: Determine if sockpty already exists {{ task_identifier }}
+    - name: Determine if sockpty already exists 
       tags: [sockpty]
       ansible.builtin.stat:
         path: "{{ ansible_user_dir }}/.local/bin/sockpty"
       register: sockpty
 
-    - name: Pull golang:latest container image for sockpty build {{ task_identifier }}
+    - name: Pull golang:latest container image for sockpty build 
       tags: [sockpty]
       containers.podman.podman_image:
         name: docker.io/library/golang:latest
       when: not sockpty.stat.exists
 
-    - name: Download sockpty if doesn't exist {{ task_identifier }}
+    - name: Download sockpty if doesn't exist 
       tags: [sockpty]
       ansible.builtin.git:
         repo: https://github.com/JayDoubleu/sockpty.git
         dest: /tmp/sockpty
-        version: "HEAD"
+        version: HEAD
       when: not sockpty.stat.exists
 
-    - name: Build and install sockpty if doesn't exist {{ task_identifier }}
+    - name: Build and install sockpty if doesn't exist 
       tags: [sockpty]
       make:
         chdir: /tmp/sockpty
         target: all-podman
       environment:
         PWD: /tmp/sockpty
-      changed_when: no
+      changed_when: false
       when: not sockpty.stat.exists
 
-    - name: Install overlay packages {{ task_identifier }}
+    - name: Install overlay packages 
       tags: [rpm-ostree]
       community.general.rpm_ostree_pkg:
         name: "{{ layered_packages }}"
@@ -230,10 +229,9 @@
       register: rpm_ostree_pkg_install
       become: true
 
-    - name: rpm-ostree apply-live {{ task_identifier }}
+    - name: rpm-ostree apply-live 
       tags: [rpm-ostree, rpm-ostree-apply-live]
-      ansible.builtin.shell:
-        cmd: rpm-ostree ex apply-live
+      ansible.builtin.command: rpm-ostree ex apply-live
       when:
         - lookup('env', 'RPM_OSTREE_LIVE_UPDATE') == 'true'
         - rpm_ostree_pkg_install.changed
@@ -248,7 +246,7 @@
         - rpm_ostree_apply_live.rc == 0
       become: true
 
-    - name: Enable and start systemd system services {{ task_identifier }}
+    - name: Enable and start systemd system services 
       tags: [systemd]
       ansible.builtin.systemd:
         name: "{{ item.name }}"
