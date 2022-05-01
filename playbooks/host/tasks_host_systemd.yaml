@@ -1,8 +1,0 @@
-- name: Enable and start system systemd services {{ task_identifier }}
-  ansible.builtin.systemd:
-    name: "{{ item.name }}"
-    state: "{{ item.state }}"
-    enabled: "{{ item.enabled }}"
-    scope: system
-  with_items: "{{ host.systemd_services }}"
-  become: true

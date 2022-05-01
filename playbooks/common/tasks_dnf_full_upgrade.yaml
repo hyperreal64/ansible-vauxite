@@ -1,4 +1,0 @@
-- name: Upgrade all packages {{ task_identifier }}
-  dnf:
-    name: "*"
-    state: latest 

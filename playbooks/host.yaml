@@ -1,0 +1,259 @@
+---
+- name: Setup host
+  hosts: localhost
+  vars:
+    hostname: nocturnal.local
+    task_identifier: "(Host: {{ hostname }})"
+    layered_packages:
+      - borgbackup
+      - borgmatic
+      - ffmpeg-libs
+      - fish
+      - fontconfig-enhanced-defaults
+      - fontconfig-font-replacements
+      - fzf
+      - neovim
+      - rofi
+      - rofimoji
+      - snapper
+      - wireguard-tools
+      - xclip
+      - xfce4-cpugraph-plugin
+      - xfce4-genmon-plugin
+      - xfce4-weather-plugin
+
+    borgmatic_repo: borg@azura.local:/bpool/borg/nocturnal
+
+    user_dirs:
+      - bin
+      - devel
+      - devel/golang
+      - devel/python
+      - repos/github.com/hyperreal64
+      - repos/pagure.io/hyperreal
+
+    delete_dirs:
+      - Desktop
+      - Documents
+      - Downloads
+      - Music
+      - Pictures
+      - Public
+      - Templates
+      - Videos
+
+    xdg_user_dirs:
+      desktop: desktop
+      download: downloads
+      templates: misc/templates
+      publicshare: public
+      documents: sync/documents
+      music: misc/music
+      pictures: sync/pictures
+      videos: misc/videos
+
+    systemd_services:
+      - name: autoborg.timer
+        state: started
+        enabled: true
+      - name: bluetooth.service
+        state: started
+        enabled: true
+      - name: cups.service
+        state: stopped
+        enabled: false
+      - name: lvm2-monitor.service
+        state: stopped
+        enabled: false
+      - name: snapper-cleanup.timer
+        state: started
+        enabled: true
+      - name: snapper-timeline.timer
+        state: started
+        enabled: true
+
+  tasks:
+    - name: Set hostname {{ task_identifier }}
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+        use: systemd
+      become: true
+
+    - name: Set sudo with no password
+      tags: [sudo]
+      ansible.builtin.lineinfile:
+        path: "/etc/sudoers.d/{{ ansible_user_id }}"
+        line: "{{ ansible_user_id }} ALL=(ALL) NOPASSWD: ALL"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+        
+    - name: Create user directories in $HOME {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/{{ item }}"
+        state: directory
+      with_items: "{{ user_dirs }}"
+
+    - name: Template out user-dirs.defaults {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.template:
+        src: user-dirs.defaults.j2
+        dest: /etc/xdg/user-dirs.defaults
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Delete unused directories in $HOME {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/{{ item }}"
+        state: absent
+      with_items: "{{ delete_dirs }}"
+
+    - name: Remove user-dirs.dirs from ~/.config {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/.config/user-dirs.dirs"
+        state: absent
+
+    - name: Test if xdg-user-dirs-update command is available {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.shell:
+        cmd: command -v xdg-user-dirs-update
+        executable: /bin/bash
+      register: xdg_user_dirs_update
+
+    - name: Run xdg-user-dirs-update {{ task_identifier }}
+      tags: [xdg]
+      ansible.builtin.shell:
+        cmd: "{{ xdg_user_dirs_update.stdout }}"
+        executable: /bin/bash
+      when:
+        - xdg_user_dirs_update.rc == 0
+
+    - name: Ensure /etc/borgmatic directory exists {{ task_identifier }}
+      tags: [borg]
+      ansible.builtin.file:
+        path: /etc/borgmatic
+        state: directory
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Template out borgmatic config {{ task_identifier }}
+      tags: [borg]
+      ansible.builtin.template:
+        src: borgmatic_config.yaml.j2
+        dest: /etc/borgmatic/config.yaml
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Copy borgmatic systemd services {{ task_identifier }}
+      tags: [borg]
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      with_items:
+        - autoborg.service
+        - autoborg.timer
+      become: true
+
+    - name: Install rpm-gpg files to /etc/pki/rpm-gpg {{ task_identifier }}
+      ansible.builtin.copy:
+        src: pki/
+        dest: /etc/pki/
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Copy RPMFusion repository to /etc/yum.repos.d {{ task_identifier }}
+      ansible.builtin.copy:
+        src: rpmfusion.repo
+        dest: /etc/yum.repos.d/rpmfusion.repo
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Add dawid/better_fonts repository {{ task_identifier }}
+      ansible.builtin.get_url:
+        url: "https://copr.fedorainfracloud.org/coprs/dawid/better_fonts/repo/fedora-{{ relver }}/dawid-better_fonts-fedora-{{ relver }}.repo"
+        dest: "/etc/yum.repos.d/dawid-better_fonts-fedora-{{ relver }}.repo"
+        mode: "0644"
+      become: true
+
+    - name: Determine if sockpty already exists {{ task_identifier }}
+      tags: [sockpty]
+      ansible.builtin.stat:
+        path: "{{ ansible_user_dir }}/.local/bin/sockpty"
+      register: sockpty
+
+    - name: Pull golang:latest container image for sockpty build {{ task_identifier }}
+      tags: [sockpty]
+      containers.podman.podman_image:
+        name: docker.io/library/golang:latest
+      when: not sockpty.stat.exists
+
+    - name: Download sockpty if doesn't exist {{ task_identifier }}
+      tags: [sockpty]
+      ansible.builtin.git:
+        repo: https://github.com/JayDoubleu/sockpty.git
+        dest: /tmp/sockpty
+        version: "HEAD"
+      when: not sockpty.stat.exists
+
+    - name: Build and install sockpty if doesn't exist {{ task_identifier }}
+      tags: [sockpty]
+      make:
+        chdir: /tmp/sockpty
+        target: all-podman
+      environment:
+        PWD: /tmp/sockpty
+      changed_when: no
+      when: not sockpty.stat.exists
+
+    - name: Install overlay packages {{ task_identifier }}
+      tags: [rpm-ostree]
+      community.general.rpm_ostree_pkg:
+        name: "{{ layered_packages }}"
+        state: present
+      register: rpm_ostree_pkg_install
+      become: true
+
+    - name: rpm-ostree apply-live {{ task_identifier }}
+      tags: [rpm-ostree, rpm-ostree-apply-live]
+      ansible.builtin.shell:
+        cmd: rpm-ostree ex apply-live
+      when:
+        - lookup('env', 'RPM_OSTREE_LIVE_UPDATE') == 'true'
+        - rpm_ostree_pkg_install.changed
+      register: rpm_ostree_apply_live
+      become: true
+
+    - name: Change default user shell to fish
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/fish
+      when:
+        - rpm_ostree_apply_live.rc == 0
+      become: true
+
+    - name: Enable and start systemd system services {{ task_identifier }}
+      tags: [systemd]
+      ansible.builtin.systemd:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+        enabled: "{{ item.enabled }}"
+        scope: system
+      with_items: "{{ systemd_services }}"
+      become: true
