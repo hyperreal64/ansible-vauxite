@@ -15,6 +15,11 @@ Playbook runs:
 ```bash
 cd playbooks/
 ansible-playbook host.yaml -K
-ansible-playbook toolbox.yaml -K
 ansible-playbook flatpaks.yaml
+
+# Create and enter a new toolbox
+toolbox create
+toolbox enter
+ansible-playbook toolbox.yaml -K
+
 ```
