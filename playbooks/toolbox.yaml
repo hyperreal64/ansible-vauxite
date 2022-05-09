@@ -2,12 +2,6 @@
 - name: Setup default toolbox
   hosts: localhost
   vars:
-    shims:
-      - flatpak
-      - systemctl
-      - rpm-ostree
-      - podman
-
     npm_lsp_packages:
       - bash-language-server
       - dockerfile-language-server-nodejs
@@ -37,6 +31,7 @@
       - git-core
       - glibc-langpack-en
       - glibc-locale-source
+      - golang
       - hugo
       - lsof
       - make
@@ -81,23 +76,6 @@
       ansible.builtin.dnf:
         name: "{{ dnf_packages }}"
         state: present
-      become: true
-
-    - name: Copy host-runner to container 
-      ansible.builtin.copy:
-        src: host-runner.sh
-        dest: /usr/local/bin/host-runner
-        mode: a+x
-      become: true
-
-    - name: Create host-runner symbolic links 
-      ansible.builtin.file:
-        src: /usr/local/bin/host-runner
-        dest: "/usr/local/bin/{{ executable }}"
-        state: link
-      loop: "{{ shims | default([]) }}"
-      loop_control:
-        loop_var: executable
       become: true
 
     - name: Install LSP packages globally 

@@ -3,6 +3,7 @@
   hosts: localhost
   vars:
     hostname: nocturnal.local
+    relver: 36
     layered_packages:
       - borgbackup
       - borgmatic
@@ -191,51 +192,12 @@
         mode: "0644"
       become: true
 
-    - name: Determine if sockpty already exists 
-      tags: [sockpty]
-      ansible.builtin.stat:
-        path: "{{ ansible_user_dir }}/.local/bin/sockpty"
-      register: sockpty
-
-    - name: Pull golang:latest container image for sockpty build 
-      tags: [sockpty]
-      containers.podman.podman_image:
-        name: docker.io/library/golang:latest
-      when: not sockpty.stat.exists
-
-    - name: Download sockpty if doesn't exist 
-      tags: [sockpty]
-      ansible.builtin.git:
-        repo: https://github.com/JayDoubleu/sockpty.git
-        dest: /tmp/sockpty
-        version: HEAD
-      when: not sockpty.stat.exists
-
-    - name: Build and install sockpty if doesn't exist 
-      tags: [sockpty]
-      make:
-        chdir: /tmp/sockpty
-        target: all-podman
-      environment:
-        PWD: /tmp/sockpty
-      changed_when: false
-      when: not sockpty.stat.exists
-
     - name: Install overlay packages 
       tags: [rpm-ostree]
       community.general.rpm_ostree_pkg:
         name: "{{ layered_packages }}"
         state: present
       register: rpm_ostree_pkg_install
-      become: true
-
-    - name: rpm-ostree apply-live 
-      tags: [rpm-ostree, rpm-ostree-apply-live]
-      ansible.builtin.command: rpm-ostree ex apply-live
-      when:
-        - lookup('env', 'RPM_OSTREE_LIVE_UPDATE') == 'true'
-        - rpm_ostree_pkg_install.changed
-      register: rpm_ostree_apply_live
       become: true
 
     - name: Change default user shell to fish
