@@ -3,13 +3,13 @@
 #
 # The values are relative pathnames from the home directory and
 # will be translated on a per-path-element basis into the users locale
-{% if host.xdg_user_dirs is defined %}
-DESKTOP={{ host.xdg_user_dirs['desktop'] }}
-DOWNLOAD={{ host.xdg_user_dirs['download'] }}
-TEMPLATES={{ host.xdg_user_dirs['templates'] }}
-PUBLICSHARE={{ host.xdg_user_dirs['publicshare'] }}
-DOCUMENTS={{ host.xdg_user_dirs['documents'] }}
-MUSIC={{ host.xdg_user_dirs['music'] }}
-PICTURES={{ host.xdg_user_dirs['pictures'] }}
-VIDEOS={{ host.xdg_user_dirs['videos'] }}
+{% if xdg_user_dirs is defined %}
+DESKTOP={{ xdg_user_dirs['desktop'] }}
+DOWNLOAD={{ xdg_user_dirs['download'] }}
+TEMPLATES={{ xdg_user_dirs['templates'] }}
+PUBLICSHARE={{ xdg_user_dirs['publicshare'] }}
+DOCUMENTS={{ xdg_user_dirs['documents'] }}
+MUSIC={{ xdg_user_dirs['music'] }}
+PICTURES={{ xdg_user_dirs['pictures'] }}
+VIDEOS={{ xdg_user_dirs['videos'] }}
 {% endif %}

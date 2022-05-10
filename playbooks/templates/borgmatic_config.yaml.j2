@@ -6,8 +6,8 @@ location:
     - /var/log
 
   repositories:
-    {% if host.borgmatic_repo is defined %}
-    - {{ host.borgmatic_repo }}
+    {% if borgmatic_repo is defined %}
+    - {{ borgmatic_repo }}
     {% endif %}
 
   exclude_patterns:
@@ -39,5 +39,5 @@ consistency:
 
 hooks:
   {% if borgmatic_hc_uuid is defined %}
-  healthchecks: https://hc-ping.com/{{ host.borgmatic_hc_uuid }}
+  healthchecks: https://hc-ping.com/{{ borgmatic_hc_uuid }}
   {% endif %}

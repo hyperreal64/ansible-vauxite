@@ -73,6 +73,131 @@
         enabled: true
 
   tasks:
+    - name: Variable check - hostname
+      ansible.builtin.assert:
+        that:
+          - hostname is defined
+          - hostname is string
+        quiet: true
+
+    - name: Variable check - relver
+      ansible.builtin.assert:
+        that:
+          - relver is defined
+          - relver is number
+        quiet: true
+
+    - name: Variable check - layered_packages
+      ansible.builtin.assert:
+        that:
+          - layered_packages is defined
+          - layered_packages is iterable
+        quiet: true
+
+    - name: Variable check - items in layered_packages
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ layered_packages }}"
+      when:
+        - layered_packages is defined
+
+    - name: Variable check - borgmatic_repo
+      ansible.builtin.assert:
+        that:
+          - borgmatic_repo is defined
+          - borgmatic_repo is string
+        quiet: true
+
+    - name: Variable check - user_dirs
+      ansible.builtin.assert:
+        that:
+          - user_dirs is defined
+          - user_dirs is iterable
+        quiet: true
+
+    - name: Variable check - items in user_dirs
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ user_dirs }}"
+      when:
+        - user_dirs is defined
+
+    - name: Variable check - delete_dirs
+      ansible.builtin.assert:
+        that:
+          - delete_dirs is defined
+          - delete_dirs is iterable
+        quiet: true
+
+    - name: Variable check - items in delete_dirs
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ delete_dirs }}"
+      when:
+        - delete_dirs is defined
+
+    - name: Variable check - xdg_user_dirs
+      ansible.builtin.assert:
+        that:
+          - xdg_user_dirs is defined
+          - xdg_user_dirs is mapping
+        quiet: true
+
+    - name: Variable check - keys/values in xdg_user_dirs
+      ansible.builtin.assert:
+        that:
+          - xdg_user_dirs["desktop"] is defined
+          - xdg_user_dirs["destkop"] is string
+          - xdg_user_dirs["download"] is defined
+          - xdg_user_dirs["download"] is string
+          - xdg_user_dirs["templates"] is defined
+          - xdg_user_dirs["templates"] is string
+          - xdg_user_dirs["publicshare"] is defined
+          - xdg_user_dirs["publicshare"] is string
+          - xdg_user_dirs["documents"] is defined
+          - xdg_user_dirs["documents"] is string
+          - xdg_user_dirs["music"] is defined
+          - xdg_user_dirs["music"] is string
+          - xdg_user_dirs["pictures"] is defined
+          - xdg_user_dirs["pictures"] is string
+          - xdg_user_dirs["videos"] is defined
+          - xdg_user_dirs["videos"] is string
+        quiet: true
+      loop: "{{ xdg_user_dirs }}"
+      when:
+        - xdg_user_dirs is defined
+
+    - name: Variable check - systemd_services
+      ansible.builtin.assert:
+        that:
+          - systemd_services is defined
+          - systemd_services is iterable
+        quiet: true
+
+    - name: Variable check - items in systemd_services
+      ansible.builtin.assert:
+        that:
+          - item.name is defined
+          - item.name is string
+          - item.state is defined
+          - item.state is string
+          - item.state in ["reloaded", "restarted", "started", "stopped"]
+          - item.enabled is defined
+          - item.enabled is boolean
+        quiet: true
+      loop: "{{ systemd_services }}"
+      when:
+        - systemd_services is defined
+
     - name: Set hostname 
       ansible.builtin.hostname:
         name: "{{ hostname }}"

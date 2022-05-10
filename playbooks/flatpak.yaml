@@ -19,6 +19,18 @@
         method: user
 
     flatpaks:
+      - name: com.getpostman.Postman
+        state: present
+        method: user
+        remote: flathub
+      - name: rest.insomnia.Insomnia
+        state: present
+        method: user
+        remote: flathub
+      - name: com.visualstudio.code
+        state: present
+        method: user
+        remote: flathub
       - name: org.flatpak.Builder
         state: present
         method: user
@@ -170,6 +182,58 @@
         remote: flathub
 
   tasks:
+    - name: Variable check - remotes
+      ansible.builtin.assert:
+        that:
+          - remotes is defined
+          - remotes is iterable
+        quiet: true
+
+    - name: Variable check - items in remotes
+      ansible.builtin.assert:
+        that:
+          - item.name is defined
+          - item.name is string
+          - item.name in ["fedora", "flathub", "flathub-beta"]
+          - item.state is defined
+          - item.state is string
+          - item.state in ["absent", "present"]
+          - item.flatpakrepo_url is defined
+          - item.flatpakrepo_url is string
+          - item.method is defined
+          - item.method is string
+          - item.method in ["system", "user"]
+        quiet: true
+      loop: "{{ remotes }}"
+      when:
+        - remotes is defined
+
+    - name: Variable check - flatpaks
+      ansible.builtin.assert:
+        that:
+          - flatpaks is defined
+          - flatpaks is iterable
+        quiet: true
+
+    - name: Variable check - items in flatpaks
+      ansible.builtin.assert:
+        that:
+          - item.name is defined
+          - item.name is string
+          - item.state is defined
+          - item.state is string
+          - item.state in ["absent", "present"]
+          - item.method is defined
+          - item.method is string
+          - item.method in ["system", "user"]
+          - item.remote is defined
+          - item.remote is string
+          - item.remote in ["fedora", "flathub", "flathub-beta"]
+        quiet: true
+      loop: "{{ flatpaks }}"
+      when:
+        - flatpaks is defined
+
     - name: Add flatpak remotes 
       tags: [remotes]
       community.general.flatpak_remote:

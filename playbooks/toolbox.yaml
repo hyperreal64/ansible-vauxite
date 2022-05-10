@@ -55,6 +55,57 @@
       - zip
 
   tasks:
+    - name: Variable check - npm_lsp_packages
+      ansible.builtin.assert:
+        that:
+          - npm_lsp_packages is defined
+          - npm_lsp_packages is iterable
+        quiet: true
+
+    - name: Variable check - items in npm_lsp_packages
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ npm_lsp_packages }}"
+      when:
+        - npm_lsp_packages is defined
+
+    - name: Variable check - pipx_packages
+      ansible.builtin.assert:
+        that:
+          - pipx_packages is defined
+          - pipx_packages is iterable
+        quiet: true
+
+    - name: Variable check - items in pipx_packages
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ pipx_packages }}"
+      when:
+        - pipx_packages is defined
+
+    - name: Variable check - dnf_packages
+      ansible.builtin.assert:
+        that:
+          - dnf_packages is defined
+          - dnf_packages is iterable
+        quiet: true
+
+    - name: Variable check - items in dnf_packages
+      ansible.builtin.assert:
+        that:
+          - item is defined
+          - item is string
+        quiet: true
+      loop: "{{ dnf_packages }}"
+      when:
+        - dnf_packages is defined
+
     - name: Configure DNF plugins 
       ansible.builtin.blockinfile:
         path: /etc/dnf/dnf.conf
