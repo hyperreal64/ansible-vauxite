@@ -35,52 +35,42 @@
         state: present
         method: user
         remote: flathub
-
       - name: ch.protonmail.protonmail-bridge
         state: present
         method: user
         remote: flathub
-
       - name: com.discordapp.Discord
         state: present
         method: user
         remote: flathub
-
       - name: com.github.tchx84.Flatseal
         state: present
         method: user
         remote: flathub
-
       - name: com.github.vladimiry.ElectronMail
         state: present
         method: user
         remote: flathub
-
       - name: fi.skyjake.Lagrange
         state: present
         method: user
         remote: flathub
-
       - name: im.riot.Riot
         state: present
         method: user
         remote: flathub
-
       - name: io.gitlab.librewolf-community
         state: present
         method: user
         remote: flathub
-
       - name: org.fedoraproject.MediaWriter
         state: present
         method: system
         remote: fedora
-
       - name: org.freedesktop.Bustle
         state: present
         method: user
         remote: flathub
-
       - name: com.github.emmanueltouzery.hotwire
         state: present
         method: user
@@ -90,92 +80,74 @@
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Calculator
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Calendar
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Characters
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Connections
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Contacts
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Evince
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Logs
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Maps
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.NautilusPreviewer
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Screenshot
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.Weather
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.baobab
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.clocks
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.eog
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.font-viewer
         state: absent
         method: system
         remote: fedora
-
       - name: org.gnome.gedit
         state: absent
         method: system
         remote: fedora
-
       - name: org.xfce.mousepad
         state: present
         method: user
         remote: flathub
-
       - name: org.xfce.ristretto
         state: present
         method: user

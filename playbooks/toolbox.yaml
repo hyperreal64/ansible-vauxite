@@ -17,6 +17,17 @@
       - isort
       - pls
       - xonsh[full]
+  
+    cargo_crates:
+      - cargo-binstall
+
+    cargo_bin_crates:
+      - du-dust
+      - exa
+      - procs
+      - ripgrep
+      - starship
+      - zellij
 
     dnf_packages:
       - "@c-development"
@@ -107,6 +118,7 @@
         - dnf_packages is defined
 
     - name: Configure DNF plugins 
+      tags: [dnf]
       ansible.builtin.blockinfile:
         path: /etc/dnf/dnf.conf
         block: |
@@ -116,6 +128,7 @@
       become: true
 
     - name: Update all packages 
+      tags: [dnf]
       ansible.builtin.dnf:
         name: "*"
         state: latest
@@ -124,12 +137,14 @@
       become: true
 
     - name: Install common packages 
+      tags: [dnf]
       ansible.builtin.dnf:
         name: "{{ dnf_packages }}"
         state: present
       become: true
 
     - name: Install LSP packages globally 
+      tags: [npm]
       community.general.npm:
         name: "{{ item }}"
         state: present
@@ -138,8 +153,22 @@
       become: true
 
     - name: Install Python packages with pipx 
+      tags: [pipx]
       community.general.pipx:
         name: "{{ item }}"
         state: install
         install_deps: true
       with_items: "{{ pipx_packages }}"
+
+    - name: Install cargo crates
+      tags: [cargo]
+      community.general.cargo:
+        name: cargo-binstall
+        state: present
+
+    - name: Install cargo binary crates
+      tags: [cargo]
+      ansible.builtin.shell:
+        cmd: "{{ ansible_user_dir }}/.cargo/bin/cargo-binstall --no-confirm {{ item }}"
+        executable: /bin/bash
+      with_items: "{{ cargo_bin_crates }}"
