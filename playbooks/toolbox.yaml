@@ -51,7 +51,7 @@
       - neovim
       - ninja-build
       - npm
-      - openssl-devel
+      - "{{ 'openssl1.1-devel' if openssl1 is defined and openssl1 is true else 'openssl-devel' }}"
       - pipx
       - poetry
       - python3-devel
