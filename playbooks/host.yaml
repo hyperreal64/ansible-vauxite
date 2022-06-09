@@ -21,8 +21,7 @@
       - xfce4-genmon-plugin
       - xfce4-weather-plugin
 
-    borgmatic_repo: 
-      - borg@azura.local:/bpool/borg/nocturnal
+    borgmatic_repo: borg@peryite.local:/bpool/borg/nocturnal
 
     user_dirs:
       - bin

@@ -55,7 +55,7 @@
         state: present
         method: user
         remote: flathub
-      - name: im.riot.Riot
+      - name: in.cinny.Cinny
         state: present
         method: user
         remote: flathub
