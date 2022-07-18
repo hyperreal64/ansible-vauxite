@@ -27,19 +27,7 @@
         state: present
         method: user
         remote: flathub
-      - name: com.visualstudio.code
-        state: present
-        method: user
-        remote: flathub
       - name: org.flatpak.Builder
-        state: present
-        method: user
-        remote: flathub
-      - name: ch.protonmail.protonmail-bridge
-        state: present
-        method: user
-        remote: flathub
-      - name: com.discordapp.Discord
         state: present
         method: user
         remote: flathub
@@ -47,19 +35,7 @@
         state: present
         method: user
         remote: flathub
-      - name: com.github.vladimiry.ElectronMail
-        state: present
-        method: user
-        remote: flathub
       - name: fi.skyjake.Lagrange
-        state: present
-        method: user
-        remote: flathub
-      - name: in.cinny.Cinny
-        state: present
-        method: user
-        remote: flathub
-      - name: io.gitlab.librewolf-community
         state: present
         method: user
         remote: flathub
@@ -144,14 +120,6 @@
         state: absent
         method: system
         remote: fedora
-      - name: org.xfce.mousepad
-        state: present
-        method: user
-        remote: flathub
-      - name: org.xfce.ristretto
-        state: present
-        method: user
-        remote: flathub
 
   tasks:
     - name: Variable check - remotes

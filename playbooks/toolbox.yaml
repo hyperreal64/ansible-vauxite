@@ -2,9 +2,11 @@
 - name: Setup default toolbox
   hosts: localhost
   vars:
-    npm_lsp_packages:
+    npm_packages:
       - bash-language-server
       - dockerfile-language-server-nodejs
+      - doctoc
+      - markdown-styles
       - pyright
       - vscode-langservers-extracted
       - yaml-language-server
@@ -12,30 +14,16 @@
     pipx_packages:
       - ansible-lint
       - black
-      - bpython
       - howdoi
       - isort
       - pls
-      - xonsh[full]
   
-    cargo_crates:
-      - cargo-binstall
-
-    cargo_bin_crates:
-      - du-dust
-      - exa
-      - procs
-      - ripgrep
-      - starship
-      - zellij
-
     dnf_packages:
       - "@c-development"
       - "@development-tools"
       - cargo
       - cmake
       - curl
-      - fish
       - fzf
       - gcc
       - git
@@ -43,7 +31,6 @@
       - glibc-langpack-en
       - glibc-locale-source
       - golang
-      - hugo
       - lsof
       - make
       - nc
@@ -51,7 +38,8 @@
       - neovim
       - ninja-build
       - npm
-      - "{{ 'openssl1.1-devel' if openssl1 is defined and openssl1 is true else 'openssl-devel' }}"
+      - openssh-server
+      - openssl-devel
       - pipx
       - poetry
       - python3-devel
@@ -66,22 +54,22 @@
       - zip
 
   tasks:
-    - name: Variable check - npm_lsp_packages
+    - name: Variable check - npm_packages
       ansible.builtin.assert:
         that:
-          - npm_lsp_packages is defined
-          - npm_lsp_packages is iterable
+          - npm_packages is defined
+          - npm_packages is iterable
         quiet: true
 
-    - name: Variable check - items in npm_lsp_packages
+    - name: Variable check - items in npm_packages
       ansible.builtin.assert:
         that:
           - item is defined
           - item is string
         quiet: true
-      loop: "{{ npm_lsp_packages }}"
+      loop: "{{ npm_packages }}"
       when:
-        - npm_lsp_packages is defined
+        - npm_packages is defined
 
     - name: Variable check - pipx_packages
       ansible.builtin.assert:
@@ -149,7 +137,7 @@
         name: "{{ item }}"
         state: present
         global: true
-      with_items: "{{ npm_lsp_packages }}"
+      with_items: "{{ npm_packages }}"
       become: true
 
     - name: Install Python packages with pipx 
@@ -160,15 +148,26 @@
         install_deps: true
       with_items: "{{ pipx_packages }}"
 
-    - name: Install cargo crates
-      tags: [cargo]
-      community.general.cargo:
-        name: cargo-binstall
-        state: present
+    - name: Generate RSA host key for SSH server
+      tags: [ssh]
+      ansible.builtin.shell: /usr/libexec/openssh/sshd-keygen rsa
+      become: true
 
-    - name: Install cargo binary crates
-      tags: [cargo]
-      ansible.builtin.shell:
-        cmd: "{{ ansible_user_dir }}/.cargo/bin/cargo-binstall --no-confirm {{ item }}"
-        executable: /bin/bash
-      with_items: "{{ cargo_bin_crates }}"
+    - name: Generate ECDSA host key for SSH server
+      tags: [ssh]
+      ansible.builtin.shell: /usr/libexec/openssh/sshd-keygen ecdsa
+      become: true
+
+    - name: Generate ED25519 host key for SSH server
+      tags: [ssh]
+      ansible.builtin.shell: /usr/libexec/openssh/sshd-keygen ed25519
+      become: true
+
+    - name: Edit /etc/ssh/sshd_config for VSCode Remote - SSH
+      ansible.builtin.blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+          Port 2222
+          ListenAddress localhost
+          PermitEmptyPasswords yes
+      become: true

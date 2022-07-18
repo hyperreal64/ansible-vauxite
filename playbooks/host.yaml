@@ -2,14 +2,13 @@
 - name: Setup host
   hosts: localhost
   vars:
-    hostname: nocturnal.local
+    hostname: evergloam.local
     relver: 36
     layered_packages:
       - borgbackup
       - borgmatic
       - distrobox
       - ffmpeg-libs
-      - fish
       - fzf
       - neovim
       - rofi
@@ -20,8 +19,9 @@
       - xfce4-cpugraph-plugin
       - xfce4-genmon-plugin
       - xfce4-weather-plugin
+      - zsh
 
-    borgmatic_repo: borg@peryite.local:/bpool/borg/nocturnal
+    borgmatic_repo: borg@apocrypha.local:/bpool/borg/evergloam
 
     user_dirs:
       - bin
