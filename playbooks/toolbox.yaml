@@ -17,6 +17,7 @@
       - howdoi
       - isort
       - pls
+      - xonsh[full]
   
     dnf_packages:
       - "@c-development"

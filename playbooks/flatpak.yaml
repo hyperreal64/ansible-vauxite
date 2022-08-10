@@ -51,6 +51,10 @@
         state: present
         method: user
         remote: flathub
+      - name: fr.free.Homebank
+        state: present
+        method: user
+        remote: flathub
 
       - name: org.gnome.FileRoller
         state: absent

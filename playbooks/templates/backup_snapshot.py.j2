@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+
+# LICENSE
+#   Copyright 2022 Jeffrey Serio <hyperreal@fedoraproject.org>
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import datetime as dt
+import shlex
+import subprocess as sp
+import sys
+from pathlib import Path
+
+{% if backup_host is defined %}
+BACKUP_HOST = "{{ backup_host }}"
+{% endif %}
+DATE = dt.datetime.now().strftime("%Y-%m-%d")
+SNAPSHOT_PATH = Path("/var/home/.snapshots/daily/%s" % DATE)
+{% if backup_recv_dir is defined %}
+RECEIVE_DIR = Path("{{ backup_recv_dir }}")
+{% endif %}
+
+
+# Logging: if stdout -> terminal window, print timestamp with msg; else
+# just print msg.
+def print_log(msg: str):
+    if sys.stdout.isatty():
+        log_date = dt.datetime.now().isoformat(" ", "seconds")
+        print("%s: %s" % (log_date, msg))
+    else:
+        print(msg)
+
+
+# Ping the backup host to ensure it is up
+ping_cmd = "ping -c 3 {}".format(BACKUP_HOST)
+ping = sp.run(shlex.split(ping_cmd), capture_output=True, check=True, text=True)
+if ping.returncode != 0:
+    print_log("There was a problem pinging host %s" % BACKUP_HOST)
+    exit(1)
+
+print_log("%s is up and running" % BACKUP_HOST)
+
+
+# Check if RECEIVE_DIR/.check exists on backup host, which would indicate the
+# filesystem is mounted.
+check_cmd = "ssh {} 'test -f {}/.check'".format(BACKUP_HOST, RECEIVE_DIR)
+check = sp.run(shlex.split(check_cmd), capture_output=True, check=True, text=True)
+match check.returncode:
+    case 255:
+        print_log("ERROR: Connection to port 22 timed out")
+        exit(1)
+
+    case 1:
+        print_log(
+            "ERROR: It appears that %s is not mounted on backup host." % RECEIVE_DIR
+        )
+        exit(1)
+
+    case _:
+        print_log("%s appears to be mounted on backup host." % RECEIVE_DIR)
+
+# Locally create the snapshot that will be sent to backup host
+snapshot_cmd = "btrfs subvolume snapshot -r /var/home {}".format(SNAPSHOT_PATH)
+snapshot = sp.run(shlex.split(snapshot_cmd), capture_output=True, check=True, text=True)
+if snapshot.returncode != 0:
+    print_log("ERROR: There was a problem creating the daily snapshot.")
+    exit("%s" % snapshot.stderr)
+
+print_log("Snapshot created successfully at %s" % SNAPSHOT_PATH)
+
+# Send the snapshot to the backup host
+send_cmd = "btrfs send -q {}".format(SNAPSHOT_PATH)
+recv_cmd = "btrfs receive -q {}".format(RECEIVE_DIR)
+ssh_cmd = "ssh {} {}".format(BACKUP_HOST, shlex.quote(recv_cmd))
+
+btrfs_send = sp.Popen(shlex.split(send_cmd), stdout=sp.PIPE)
+btrfs_recv = sp.Popen(shlex.split(ssh_cmd), stdin=btrfs_send.stdout, stdout=sp.PIPE)
+if btrfs_send.stdout:
+    btrfs_send.stdout.close()
+error = btrfs_recv.communicate()[1]
+
+if error:
+    print_log(
+        "ERROR: There was a problem receiving the snapshot at %s:%s"
+        % (BACKUP_HOST, RECEIVE_DIR),
+    )
+    exit("%s" % btrfs_recv.stderr)
+
+print_log("Snapshot sent successfully to %s:%s/%s" % (BACKUP_HOST, RECEIVE_DIR, DATE))

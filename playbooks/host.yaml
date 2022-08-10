@@ -5,11 +5,10 @@
     hostname: evergloam.local
     relver: 36
     layered_packages:
-      - borgbackup
-      - borgmatic
       - distrobox
       - ffmpeg-libs
       - fzf
+      - mosh
       - neovim
       - rofi
       - rofimoji
@@ -20,8 +19,9 @@
       - xfce4-genmon-plugin
       - xfce4-weather-plugin
       - zsh
-
-    borgmatic_repo: borg@apocrypha.local:/bpool/borg/evergloam
+   
+    backup_host: apocrypha.local
+    backup_recv_dir: /bpool/backups/evergloam
 
     user_dirs:
       - bin
@@ -49,7 +49,7 @@
       videos: misc/videos
 
     systemd_services:
-      - name: autoborg.timer
+      - name: backup_snapshot.timer
         state: started
         enabled: true
       - name: bluetooth.service
@@ -93,13 +93,6 @@
       with_items: "{{ layered_packages }}"
       when:
         - layered_packages is defined
-
-    - name: Variable check - borgmatic_repo
-      ansible.builtin.assert:
-        that:
-          - borgmatic_repo is defined
-          - borgmatic_repo is string
-        quiet: true
 
     - name: Variable check - user_dirs
       ansible.builtin.assert:
@@ -192,6 +185,29 @@
         mode: "0755"
       with_items: "{{ user_dirs }}"
 
+    - name: Template out backup_snapshot.py
+      tags: [backup]
+      ansible.builtin.template:
+        src: backup_snapshot.py.j2
+        dest: /usr/local/bin/backup_snapshot.py
+        owner: root
+        group: root
+        mode: "u+rwx,g+r,o+r"
+      become: true
+
+    - name: Copy backup_snapshot systemd unit files
+      tags: [backup]
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      with_items:
+        - backup_snapshot.service
+        - backup_snapshot.timer
+      become: true
+
     - name: Template out user-dirs.defaults 
       tags: [xdg]
       ansible.builtin.template:
@@ -226,40 +242,7 @@
       ansible.builtin.command: "{{ xdg_user_dirs_update.stdout }}"
       when:
         - xdg_user_dirs_update.rc == 0
-
-    - name: Ensure /etc/borgmatic directory exists 
-      tags: [borg]
-      ansible.builtin.file:
-        path: /etc/borgmatic
-        state: directory
-        owner: root
-        group: root
-        mode: "0644"
-      become: true
-
-    - name: Template out borgmatic config 
-      tags: [borg]
-      ansible.builtin.template:
-        src: borgmatic_config.yaml.j2
-        dest: /etc/borgmatic/config.yaml
-        owner: root
-        group: root
-        mode: "0644"
-      become: true
-
-    - name: Copy borgmatic systemd services 
-      tags: [borg]
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: "/etc/systemd/system/{{ item }}"
-        owner: root
-        group: root
-        mode: "0644"
-      with_items:
-        - autoborg.service
-        - autoborg.timer
-      become: true
-
+    
     - name: Install rpm-gpg files to /etc/pki/rpm-gpg 
       ansible.builtin.copy:
         src: pki/
