@@ -32,12 +32,15 @@
       - glibc-langpack-en
       - glibc-locale-source
       - golang
+      - java-latest-openjdk
+      - java-latest-openjdk-devel
       - lsof
       - make
       - nc
       - mc
       - neovim
       - ninja-build
+      - notmuch
       - npm
       - openssh-server
       - openssl-devel
@@ -45,7 +48,6 @@
       - poetry
       - python3-devel
       - python3-pip
-      - restic
       - rsync
       - rust
       - unzip

@@ -20,9 +20,6 @@
       - xfce4-weather-plugin
       - zsh
    
-    backup_host: apocrypha.local
-    backup_recv_dir: /bpool/backups/evergloam
-
     user_dirs:
       - bin
       - devel
@@ -41,7 +38,7 @@
     xdg_user_dirs:
       desktop: desktop
       download: downloads
-      templates: misc/templates
+      templates: sync/templates
       publicshare: public
       documents: sync/documents
       music: misc/music
@@ -49,9 +46,6 @@
       videos: misc/videos
 
     systemd_services:
-      - name: backup_snapshot.timer
-        state: started
-        enabled: true
       - name: bluetooth.service
         state: started
         enabled: true
@@ -184,29 +178,6 @@
         group: "{{ ansible_user_id }}"
         mode: "0755"
       with_items: "{{ user_dirs }}"
-
-    - name: Template out backup_snapshot.py
-      tags: [backup]
-      ansible.builtin.template:
-        src: backup_snapshot.py.j2
-        dest: /usr/local/bin/backup_snapshot.py
-        owner: root
-        group: root
-        mode: "u+rwx,g+r,o+r"
-      become: true
-
-    - name: Copy backup_snapshot systemd unit files
-      tags: [backup]
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: "/etc/systemd/system/{{ item }}"
-        owner: root
-        group: root
-        mode: "0644"
-      with_items:
-        - backup_snapshot.service
-        - backup_snapshot.timer
-      become: true
 
     - name: Template out user-dirs.defaults 
       tags: [xdg]

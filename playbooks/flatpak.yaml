@@ -55,6 +55,22 @@
         state: present
         method: user
         remote: flathub
+      - name: com.brave.browser
+        state: present
+        method: user
+        remote: flathub
+      - name: ch.protonmail.protonmail-bridge
+        state: present
+        method: user
+        remote: flathub
+      - name: com.github.ransome1.sleek
+        state: present
+        method: user
+        remote: flathub
+      - name: org.signal.Signal
+        state: present
+        method: user
+        remote: flathub
 
       - name: org.gnome.FileRoller
         state: absent
