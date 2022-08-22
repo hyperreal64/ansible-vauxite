@@ -63,7 +63,7 @@
         state: present
         method: user
         remote: flathub
-      - name: com.github.ransome1.sleek
+      - name: org.sparkleshare.SparkleShare
         state: present
         method: user
         remote: flathub
