@@ -51,7 +51,7 @@
         state: present
         method: user
         remote: flathub
-      - name: fr.free.Homebank
+      - name: net.ankiweb.Anki
         state: present
         method: user
         remote: flathub
@@ -60,10 +60,6 @@
         method: user
         remote: flathub
       - name: ch.protonmail.protonmail-bridge
-        state: present
-        method: user
-        remote: flathub
-      - name: org.sparkleshare.SparkleShare
         state: present
         method: user
         remote: flathub
